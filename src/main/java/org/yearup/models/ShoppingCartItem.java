@@ -4,57 +4,79 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 
-public class ShoppingCartItem
-{
-    private Product product = null;
+public class ShoppingCartItem {
+    private Product product;
     private int quantity = 1;
     private BigDecimal discountPercent = BigDecimal.ZERO;
 
-
-    public Product getProduct()
-    {
-        return product;
+    // Default constructor
+    public ShoppingCartItem() {
     }
 
-    public void setProduct(Product product)
-    {
+    // Constructor to initialize with a product and quantity
+    public ShoppingCartItem(Product product, int quantity) {
         this.product = product;
-    }
-
-    public int getQuantity()
-    {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity)
-    {
         this.quantity = quantity;
     }
 
-    public BigDecimal getDiscountPercent()
-    {
-        return discountPercent;
-    }
-
-    public void setDiscountPercent(BigDecimal discountPercent)
-    {
+    // Constructor to initialize with a product, quantity, and discount
+    public ShoppingCartItem(Product product, int quantity, BigDecimal discountPercent) {
+        this.product = product;
+        this.quantity = quantity;
         this.discountPercent = discountPercent;
     }
 
-    @JsonIgnore
-    public int getProductId()
-    {
-        return this.product.getProductId();
+    // Getter and Setter for Product
+    public Product getProduct() {
+        return product;
     }
 
-    public BigDecimal getLineTotal()
-    {
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    // Getter and Setter for Quantity
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+        this.quantity = quantity;
+    }
+
+    // Getter and Setter for Discount Percent
+    public BigDecimal getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(BigDecimal discountPercent) {
+        if (discountPercent.compareTo(BigDecimal.ZERO) < 0 || discountPercent.compareTo(BigDecimal.ONE) > 0) {
+            throw new IllegalArgumentException("Discount percent must be between 0 and 1.");
+        }
+        this.discountPercent = discountPercent;
+    }
+
+    // Get Product ID (Derived from Product)
+    @JsonIgnore
+    public int getProductId() {
+        return this.product != null ? this.product.getProductId() : 0;
+    }
+
+    // Calculate Line Total
+    public BigDecimal getLineTotal() {
+        if (product == null || product.getPrice() == null) {
+            throw new IllegalStateException("Product or product price is missing.");
+        }
+
         BigDecimal basePrice = product.getPrice();
-        BigDecimal quantity = new BigDecimal(this.quantity);
+        BigDecimal quantityDecimal = new BigDecimal(this.quantity);
 
-        BigDecimal subTotal = basePrice.multiply(quantity);
-        BigDecimal discountAmount = subTotal.multiply(discountPercent);
+        BigDecimal subTotal = basePrice.multiply(quantityDecimal); // Price * Quantity
+        BigDecimal discountAmount = subTotal.multiply(discountPercent); // Discount Amount
 
-        return subTotal.subtract(discountAmount);
+        return subTotal.subtract(discountAmount); // Subtract Discount
     }
 }

@@ -5,65 +5,58 @@ import org.yearup.data.CategoryDao;
 import org.yearup.models.Category;
 
 import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
-public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao
-{
-    public MySqlCategoryDao(DataSource dataSource)
-    {
+public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
+    private final List<Category> categories = new ArrayList<>();
+    private int nextId = 1;
+
+    public MySqlCategoryDao(DataSource dataSource) {
         super(dataSource);
     }
 
     @Override
-    public List<Category> getAllCategories()
-    {
-        // get all categories
+    public List<Category> getAllCategories() {
+        return new ArrayList<>(categories);
+    }
+
+    @Override
+    public Category getCategoryById(int categoryId) {
+        return categories.stream()
+                .filter(category -> category.getCategoryId() == categoryId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public Category getById(int categoryId) {
         return null;
     }
 
     @Override
-    public Category getById(int categoryId)
-    {
-        // get category by id
-        return null;
-    }
-
-    @Override
-    public Category create(Category category)
-    {
-        // create a new category
-        return null;
-    }
-
-    @Override
-    public void update(int categoryId, Category category)
-    {
-        // update category
-    }
-
-    @Override
-    public void delete(int categoryId)
-    {
-        // delete category
-    }
-
-    private Category mapRow(ResultSet row) throws SQLException
-    {
-        int categoryId = row.getInt("category_id");
-        String name = row.getString("name");
-        String description = row.getString("description");
-
-        Category category = new Category()
-        {{
-            setCategoryId(categoryId);
-            setName(name);
-            setDescription(description);
-        }};
-
+    public Category create(Category category) {
+        category.setCategoryId(nextId++);
+        categories.add(category);
         return category;
     }
 
+    @Override
+    public void update(int categoryId, Category category) {
+        Optional<Category> existing = categories.stream()
+                .filter(cat -> cat.getCategoryId() == categoryId)
+                .findFirst();
+
+        existing.ifPresent(cat -> {
+            cat.setName(category.getName());
+            cat.setDescription(category.getDescription());
+        });
+    }
+
+    @Override
+    public void delete(int categoryId) {
+        categories.removeIf(category -> category.getCategoryId() == categoryId);
+    }
 }

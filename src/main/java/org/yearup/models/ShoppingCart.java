@@ -4,43 +4,68 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ShoppingCart
-{
+public class ShoppingCart {
     private Map<Integer, ShoppingCartItem> items = new HashMap<>();
 
-    public Map<Integer, ShoppingCartItem> getItems()
-    {
+    // Get all items in the cart
+    public Map<Integer, ShoppingCartItem> getItems() {
         return items;
     }
 
-    public void setItems(Map<Integer, ShoppingCartItem> items)
-    {
+    public void setItems(Map<Integer, ShoppingCartItem> items) {
         this.items = items;
     }
 
-    public boolean contains(int productId)
-    {
+    // Check if the cart contains a specific product
+    public boolean contains(int productId) {
         return items.containsKey(productId);
     }
 
-    public void add(ShoppingCartItem item)
-    {
-        items.put(item.getProductId(), item);
+    // Add an item to the cart
+    public void add(ShoppingCartItem item) {
+        if (contains(item.getProductId())) {
+            // If the product is already in the cart, update the quantity
+            ShoppingCartItem existingItem = items.get(item.getProductId());
+            existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
+        } else {
+            items.put(item.getProductId(), item);
+        }
     }
 
-    public ShoppingCartItem get(int productId)
-    {
+    // Get an item by productId
+    public ShoppingCartItem get(int productId) {
         return items.get(productId);
     }
 
-    public BigDecimal getTotal()
-    {
-        BigDecimal total = items.values()
-                                .stream()
-                                .map(i -> i.getLineTotal())
-                                .reduce( BigDecimal.ZERO, (lineTotal, subTotal) -> subTotal.add(lineTotal));
-
-        return total;
+    // Update the quantity of an item in the cart
+    public void updateQuantity(int productId, int newQuantity) {
+        if (contains(productId)) {
+            ShoppingCartItem item = items.get(productId);
+            item.setQuantity(newQuantity);
+        } else {
+            throw new IllegalArgumentException("Product not found in the cart.");
+        }
     }
 
+    // Remove an item from the cart
+    public void remove(int productId) {
+        if (contains(productId)) {
+            items.remove(productId);
+        } else {
+            throw new IllegalArgumentException("Product not found in the cart.");
+        }
+    }
+
+    // Clear all items from the cart
+    public void clear() {
+        items.clear();
+    }
+
+    // Calculate the total price of all items in the cart
+    public BigDecimal getTotal() {
+        return items.values()
+                .stream()
+                .map(ShoppingCartItem::getLineTotal) // Multiply price by quantity
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
