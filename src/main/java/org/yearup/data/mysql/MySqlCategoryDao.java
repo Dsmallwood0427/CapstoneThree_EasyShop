@@ -1,6 +1,5 @@
 package org.yearup.data.mysql;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.yearup.data.CategoryDao;
 import org.yearup.models.Category;
@@ -14,7 +13,6 @@ import java.util.List;
 @Component
 public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
 
-    @Autowired
     public MySqlCategoryDao(DataSource dataSource) {
         super(dataSource);
     }
@@ -30,24 +28,19 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
         String sql = "SELECT * FROM categories";
 
         try (Connection connection = this.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    Category category = mapRow(resultSet);
-                    categories.add(category);
-                }
+            while (resultSet.next()) {
+                Category category = mapRow(resultSet);
+                categories.add(category);
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        return categories;
-    }
 
-    @Override
-    public Category getCategoryById(int categoryId) {
-        return null;
+        return categories;
     }
 
     @Override
@@ -66,7 +59,7 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -80,7 +73,6 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
 
             preparedStatement.setString(1, category.getName());
             preparedStatement.setString(2, category.getDescription());
-
 
             int rows = preparedStatement.executeUpdate();
 
@@ -96,7 +88,7 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         return category;
@@ -105,6 +97,7 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
     @Override
     public void update(int categoryId, Category category) {
         String query = "UPDATE categories SET name = ?, description = ? WHERE category_id = ?";
+
         try (Connection connection = this.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
@@ -114,15 +107,15 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
 
             preparedStatement.executeUpdate();
 
-
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
     @Override
     public void delete(int categoryId) {
         String query = "DELETE FROM categories WHERE category_id = ?";
+
         try (Connection connection = this.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
@@ -130,21 +123,15 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao {
             preparedStatement.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
     private Category mapRow(ResultSet row) throws SQLException {
-        int categoryId = row.getInt("category_id");
-        String name = row.getString("name");
-        String description = row.getString("description");
-
-        Category category = new Category() {{
-            setCategoryId(categoryId);
-            setName(name);
-            setDescription(description);
-        }};
-
+        Category category = new Category();
+        category.setCategoryId(row.getInt("category_id"));
+        category.setName(row.getString("name"));
+        category.setDescription(row.getString("description"));
         return category;
     }
 }

@@ -96,7 +96,7 @@ CREATE TABLE shopping_cart (
 /*  INSERT Users  */
 INSERT INTO users (username, hashed_password, role) 
 VALUES  ('user','$2a$10$NkufUPF3V8dEPSZeo1fzHe9ScBu.LOay9S3N32M84yuUM2OJYEJ/.','ROLE_USER'),
-        ('admin','$2a$10$lfQi9jSfhZZhfS6/Kyzv3u3418IgnWXWDQDk7IbcwlCFPgxg9Iud2','ROLE_ADMIN'),
+        ('admin','$2a$10$lfQi9jSfhZZhfS6/Kyzv3u3418IgnWXWDQDk7IbcwlCFPgxg9Iud2','ROLE_ADMIN')
         ('george','$2a$10$lfQi9jSfhZZhfS6/Kyzv3u3418IgnWXWDQDk7IbcwlCFPgxg9Iud2','ROLE_USER');
 
 /* INSERT Profiles */
@@ -211,10 +211,8 @@ VALUES  ('Cookware Set', 149.99, 3, 'A comprehensive set of high-quality cookwar
 -- sample duplicates from "bug"
 INSERT INTO products (name, price, category_id, description, image_url, stock, featured, color)
 VALUES  ('Laptop', 999.99, 1, 'A high-performance laptop for work and entertainment.', 'laptop.jpg', 30, 0, 'Gray'),
-        ('Laptop', 999.99, 1, 'A high-performance gaming laptop.', 'laptop.jpg', 30, 0, 'Gray'),
         ('Tea Kettle', 29.99, 3, 'Brew a perfect cup of tea with this classic tea kettle.', 'tea-kettle.jpg', 50, 1, 'White');
 
 -- add shopping cart items
 INSERT INTO shopping_cart (user_id, product_id, quantity)
-VALUES  (3, 8, 1),
-        (3, 10, 1);
+VALUES  (3, 8, 1);

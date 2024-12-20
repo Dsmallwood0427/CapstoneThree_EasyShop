@@ -2,9 +2,9 @@ package org.yearup.data.mysql;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.yearup.data.UserDao;
 import org.yearup.models.User;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -13,141 +13,130 @@ import java.util.List;
 
 @Component
 public class MySqlUserDao extends MySqlDaoBase implements UserDao {
-
-    private final BCryptPasswordEncoder passwordEncoder;
-
     @Autowired
     public MySqlUserDao(DataSource dataSource) {
         super(dataSource);
-        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
+
+    @Override
+    public void update(int id, User user) {
+
     }
 
     @Override
     public User create(User newUser) {
         String sql = "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)";
-        String hashedPassword = passwordEncoder.encode(newUser.getPassword());
+        String hashedPassword = new BCryptPasswordEncoder().encode(newUser.getPassword());
 
-        try (Connection connection = getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = getConnection()) {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, newUser.getUsername());
             ps.setString(2, hashedPassword);
             ps.setString(3, newUser.getRole());
+
             ps.executeUpdate();
 
-            ResultSet generatedKeys = ps.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                newUser.setId(generatedKeys.getInt(1));
-            }
-            newUser.setPassword(""); // Clear password for security
-            return newUser;
+            User user = getByUserName(newUser.getUsername());
+            user.setPassword("");
+
+            return user;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Error creating new user", e);
+            throw new RuntimeException(e);
         }
     }
 
     @Override
+    public void delete(int id) {
+
+    }
+
+    @Override
     public List<User> getAll() {
-        String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
 
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+        String sql = "SELECT * FROM users";
+        try (Connection connection = getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(sql);
 
-            while (resultSet.next()) {
-                users.add(mapRow(resultSet));
+            ResultSet row = statement.executeQuery();
+
+            while (row.next()) {
+                User user = mapRow(row);
+                users.add(user);
             }
-
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving all users", e);
+            throw new RuntimeException(e);
         }
+
         return users;
     }
 
     @Override
     public User getUserById(int id) {
         String sql = "SELECT * FROM users WHERE user_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
+        try (Connection connection = getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(sql);
             statement.setInt(1, id);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return mapRow(resultSet);
-                }
-            }
 
+            ResultSet row = statement.executeQuery();
+
+            if (row.next()) {
+                User user = mapRow(row);
+                return user;
+            }
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving user by ID: " + id, e);
+            throw new RuntimeException(e);
         }
         return null;
     }
 
     @Override
     public User getByUserName(String username) {
-        String sql = "SELECT * FROM users WHERE username = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        String sql = "SELECT * " +
+                " FROM users " +
+                " WHERE username = ?";
 
+        try (Connection connection = getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, username);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return mapRow(resultSet);
-                }
-            }
 
+            ResultSet row = statement.executeQuery();
+            if (row.next()) {
+
+                User user = mapRow(row);
+                return user;
+            }
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving user by username: " + username, e);
+            System.out.println(e);
         }
+
         return null;
     }
 
     @Override
     public int getIdByUsername(String username) {
-        return 0;
-    }
+        User user = getByUserName(username);
 
-    @Override
-    public void update(int id, User user) {
-        String sql = "UPDATE users SET username = ?, role = ? WHERE user_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, user.getUsername());
-            statement.setString(2, user.getRole());
-            statement.setInt(3, id);
-            statement.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error updating user with ID: " + id, e);
+        if (user != null) {
+            return user.getId();
         }
-    }
 
-    @Override
-    public void delete(int id) {
-        String sql = "DELETE FROM users WHERE user_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setInt(1, id);
-            statement.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error deleting user with ID: " + id, e);
-        }
+        return -1;
     }
 
     @Override
     public boolean exists(String username) {
-        return getByUserName(username) != null;
+        User user = getByUserName(username);
+        return user != null;
     }
 
-    private User mapRow(ResultSet resultSet) throws SQLException {
-        int userId = resultSet.getInt("user_id");
-        String username = resultSet.getString("username");
-        String role = resultSet.getString("role");
+    private User mapRow(ResultSet row) throws SQLException {
+        int userId = row.getInt("user_id");
+        String username = row.getString("username");
+        String hashedPassword = row.getString("hashed_password");
+        String role = row.getString("role");
 
-        return new User(userId, username, "", role); // Password is not returned for security
+        return new User(userId, username, hashedPassword, role);
     }
 }
