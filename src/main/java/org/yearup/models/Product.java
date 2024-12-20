@@ -4,7 +4,7 @@ import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public class Product {
+public class Product extends Category {
     private int productId;
 
     @NotNull(message = "Name cannot be null")

@@ -1,8 +1,15 @@
 package org.yearup.models;
 
+import javax.validation.constraints.*;
+
 public class Category {
     private int categoryId;
+
+    @NotNull(message = "Category name cannot be null")
+    @Size(min = 1, max = 100, message = "Category name must be between 1 and 100 characters")
     private String name;
+
+    @Size(max = 255, message = "Description must be less than 255 characters")
     private String description;
 
     public Category() {
@@ -36,5 +43,14 @@ public class Category {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "Category{" +
+                "categoryId=" + categoryId +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }
