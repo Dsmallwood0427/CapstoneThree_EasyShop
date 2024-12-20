@@ -115,4 +115,20 @@ public class Product extends Category {
     public String getImageUrl() {
         return  imageUrl;
     }
+
+    public void setImageUrl(String image) {
+
+    }
+
+    public void setFeatured(boolean b) {
+    }
+
+    public void setStock(int i) {
+    }
+
+    public void setColor(String black) {
+    }
+
+    public void setPrice(BigDecimal bigDecimal) {
+    }
 }
