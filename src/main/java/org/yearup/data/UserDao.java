@@ -16,5 +16,7 @@ public interface UserDao {
 
     User create(User user);
 
+    void delete(int id);
+
     boolean exists(String username);
 }

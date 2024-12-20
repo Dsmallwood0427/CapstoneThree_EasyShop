@@ -2,88 +2,88 @@ package org.yearup.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.CategoryDao;
+import org.yearup.data.ProductDao;
 import org.yearup.models.Category;
+import org.yearup.models.Product;
 
-import javax.validation.Valid;
 import java.util.List;
 
-@RestController
-@RequestMapping("categories")
 @CrossOrigin
+@RestController
+@RequestMapping("/categories")
 public class CategoriesController {
-
     private final CategoryDao categoryDao;
+    private final ProductDao productDao;
 
     @Autowired
-    public CategoriesController(CategoryDao categoryDao) {
+    public CategoriesController(CategoryDao categoryDao, ProductDao productDao) {
         this.categoryDao = categoryDao;
+        this.productDao = productDao;
     }
 
-    // Get all categories
-    @GetMapping("")
-    public ResponseEntity<List<Category>> getAllCategories() {
+    @GetMapping
+    @PreAuthorize("permitAll()")
+    public List<Category> getAll() {
+        return categoryDao.getAllCategories();
+    }
+
+    @GetMapping("{id}")
+    @PreAuthorize("permitAll()")
+    public Category getById(@PathVariable int id) {
+        Category category = null;
         try {
-            List<Category> categories = categoryDao.getAllCategories();
-            return ResponseEntity.ok(categories);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            category = categoryDao.getById(id);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong...");
+        }
+        if (category == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        return category;
+    }
+
+    @GetMapping("{categoryId}/products")
+    @PreAuthorize("permitAll()")
+    public List<Product> getProductsById(@PathVariable int categoryId) {
+        try {
+            return productDao.listByCategoryId(categoryId);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong...");
         }
     }
 
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable int id) {
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Category addCategory(@RequestBody Category category) {
         try {
-            Category category = categoryDao.getById(id);
-            if (category != null) {
-                return ResponseEntity.ok(category);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return categoryDao.create(category);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong...");
         }
     }
 
-    // Create a new category
-    @PostMapping("")
-    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
+    @PutMapping("{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void updateCategory(@PathVariable int id, @RequestBody Category category) {
         try {
-            Category createdCategory = categoryDao.create(category);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    // Update an existing category
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> updateCategory(@PathVariable int id, @Valid @RequestBody Category category) {
-        try {
-            if (categoryDao.getById(id) == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
             categoryDao.update(id, category);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong...");
         }
     }
-
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable int id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCategory(@PathVariable int id) {
         try {
-            if (categoryDao.getById(id) == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
             categoryDao.delete(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong...");
         }
     }
 }

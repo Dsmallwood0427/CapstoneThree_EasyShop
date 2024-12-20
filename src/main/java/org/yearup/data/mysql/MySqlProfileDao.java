@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import org.yearup.models.Product;
 import org.yearup.models.Profile;
 import org.yearup.data.ProfileDao;
+import org.yearup.models.User;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -14,6 +15,11 @@ public class MySqlProfileDao extends MySqlDaoBase implements ProfileDao
     public MySqlProfileDao(DataSource dataSource)
     {
         super(dataSource);
+    }
+
+    @Override
+    public void update(int id, User user) {
+
     }
 
     @Override
